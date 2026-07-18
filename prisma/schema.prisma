@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SaleStatus {
+  pending
+  approved
+  rejected
+}
+
+enum LedgerEntryType {
+  ADVANCE_PAYOUT
+  ADJUSTMENT_APPROVED
+  ADJUSTMENT_REJECTED
+  WITHDRAWAL_DEBIT
+  WITHDRAWAL_REVERSAL
+}
+
+enum WithdrawalStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REJECTED
+}
+
+model User {
+  id                           String    @id @default(uuid()) @db.Uuid
+  name                         String
+  email                        String    @unique
+  withdrawableBalancePaise     BigInt    @default(0) @map("withdrawable_balance_paise")
+  lastWithdrawalCompletedAt    DateTime? @map("last_withdrawal_completed_at") @db.Timestamptz
+  createdAt                    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  sales        Sale[]
+  ledgerEntries LedgerEntry[]
+  withdrawals  Withdrawal[]
+
+  @@map("users")
+}
+
+model Brand {
+  id   String @id @default(uuid()) @db.Uuid
+  name String @unique
+
+  sales Sale[]
+
+  @@map("brands")
+}
+
+model Sale {
+  id                 String     @id @default(uuid()) @db.Uuid
+  userId             String     @map("user_id") @db.Uuid
+  brandId            String     @map("brand_id") @db.Uuid
+  earningPaise       BigInt     @map("earning_paise")
+  status             SaleStatus @default(pending)
+  advancePaid        Boolean    @default(false) @map("advance_paid")
+  advanceAmountPaise BigInt     @default(0) @map("advance_amount_paise")
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  reconciledAt       DateTime?  @map("reconciled_at") @db.Timestamptz
+
+  user          User          @relation(fields: [userId], references: [id])
+  brand         Brand         @relation(fields: [brandId], references: [id])
+  ledgerEntries LedgerEntry[]
+
+  @@index([status])
+  @@index([userId, status])
+  @@map("sales")
+}
+
+model LedgerEntry {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @map("user_id") @db.Uuid
+  saleId            String?         @map("sale_id") @db.Uuid
+  type              LedgerEntryType
+  amountPaise       BigInt          @map("amount_paise")
+  balanceAfterPaise BigInt          @map("balance_after_paise")
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz
+
+  user User  @relation(fields: [userId], references: [id])
+  sale Sale? @relation(fields: [saleId], references: [id])
+
+  @@map("ledger_entries")
+}
+
+model Withdrawal {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @map("user_id") @db.Uuid
+  amountPaise BigInt           @map("amount_paise")
+  status      WithdrawalStatus @default(PENDING)
+  requestedAt DateTime         @default(now()) @map("requested_at") @db.Timestamptz
+  completedAt DateTime?        @map("completed_at") @db.Timestamptz
+  externalRef String?          @map("external_ref")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("withdrawals")
+}

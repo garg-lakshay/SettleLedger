@@ -1,0 +1,278 @@
+{
+  "info": {
+    "name": "SettleLedger API",
+    "description": "Postman collection for SettleLedger payout management API. Import and set `baseUrl` (default http://localhost:3000). Run the \"Worked Example Flow\" folder after seeding.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "userId", "value": "" },
+    { "key": "brandId", "value": "" },
+    { "key": "saleId1", "value": "" },
+    { "key": "saleId2", "value": "" },
+    { "key": "saleId3", "value": "" },
+    { "key": "withdrawalId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Create Brand",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.id) pm.collectionVariables.set('brandId', json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Nike\"\n}"
+        },
+        "url": "{{baseUrl}}/api/brands"
+      }
+    },
+    {
+      "name": "Create User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.id) pm.collectionVariables.set('userId', json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john_doe@example.com\"\n}"
+        },
+        "url": "{{baseUrl}}/api/users"
+      }
+    },
+    {
+      "name": "Create Sale",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"brandId\": \"{{brandId}}\",\n  \"earningRupees\": 40\n}"
+        },
+        "url": "{{baseUrl}}/api/sales"
+      }
+    },
+    {
+      "name": "List Sales",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sales?userId={{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "sales"],
+          "query": [{ "key": "userId", "value": "{{userId}}" }]
+        }
+      }
+    },
+    {
+      "name": "Run Advance Payout Batch",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/payouts/advance/run"
+      }
+    },
+    {
+      "name": "Reconcile Sale (approve)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"approved\"\n}"
+        },
+        "url": "{{baseUrl}}/api/admin/sales/{{saleId1}}/reconcile"
+      }
+    },
+    {
+      "name": "Reconcile Sale (reject)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"rejected\"\n}"
+        },
+        "url": "{{baseUrl}}/api/admin/sales/{{saleId3}}/reconcile"
+      }
+    },
+    {
+      "name": "Get Balance",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/users/{{userId}}/balance"
+      }
+    },
+    {
+      "name": "Get Ledger",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/users/{{userId}}/ledger"
+      }
+    },
+    {
+      "name": "Create Withdrawal",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.id) pm.collectionVariables.set('withdrawalId', json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"amountRupees\": 12\n}"
+        },
+        "url": "{{baseUrl}}/api/withdrawals"
+      }
+    },
+    {
+      "name": "Settle Withdrawal (SUCCESS)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"SUCCESS\"\n}"
+        },
+        "url": "{{baseUrl}}/api/withdrawals/{{withdrawalId}}/settle"
+      }
+    },
+    {
+      "name": "Settle Withdrawal (FAILED - reversal)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"FAILED\"\n}"
+        },
+        "url": "{{baseUrl}}/api/withdrawals/{{withdrawalId}}/settle"
+      }
+    },
+    {
+      "name": "Worked Example Flow",
+      "item": [
+        {
+          "name": "1. Run Advance Payout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/payouts/advance/run"
+          }
+        },
+        {
+          "name": "2. Approve Sale 1",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"approved\"\n}" },
+            "url": "{{baseUrl}}/api/admin/sales/{{saleId1}}/reconcile"
+          }
+        },
+        {
+          "name": "3. Approve Sale 2",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"approved\"\n}" },
+            "url": "{{baseUrl}}/api/admin/sales/{{saleId2}}/reconcile"
+          }
+        },
+        {
+          "name": "4. Reject Sale 3",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"rejected\"\n}" },
+            "url": "{{baseUrl}}/api/admin/sales/{{saleId3}}/reconcile"
+          }
+        },
+        {
+          "name": "5. Check Balance (expect ₹80)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/{{userId}}/balance"
+          }
+        },
+        {
+          "name": "6. Withdraw ₹12",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('withdrawalId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"amountRupees\": 12\n}" },
+            "url": "{{baseUrl}}/api/withdrawals"
+          }
+        },
+        {
+          "name": "7. Settle SUCCESS",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"SUCCESS\"\n}" },
+            "url": "{{baseUrl}}/api/withdrawals/{{withdrawalId}}/settle"
+          }
+        },
+        {
+          "name": "8. Final Balance (expect ₹68)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/{{userId}}/balance"
+          }
+        }
+      ]
+    }
+  ]
+}
