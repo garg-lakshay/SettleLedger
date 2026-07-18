@@ -129,20 +129,28 @@ Postman collection is at `postman/SettleLedger.postman_collection.json`.
 ## Code layout
 
 ```
-src/
-├── config/prisma.js          # Prisma client singleton
-├── utils/
-│   ├── money.js              # toPaise, toRupees, floorPercent
-│   ├── serialize.js          # response mappers (paise -> rupees)
-│   └── errors.js             # AppError + asyncHandler
-├── services/
-│   ├── ledgerService.js      # writes ledger entries, updates balance
-│   ├── payoutService.js      # advance batch job + reconciliation
-│   └── withdrawalService.js  # initiate + settle withdrawals
-├── controllers/apiController.js
-├── routes/index.js
-├── app.js
-└── index.js
+settleledger/
+├── prisma/
+│   ├── schema.prisma          # models + migrations
+│   └── seed.js                # 3 brands, john_doe (worked example), jane_smith
+├── src/
+│   ├── config/prisma.js       # Prisma client singleton
+│   ├── utils/
+│   │   ├── money.js           # toPaise, toRupees, floorPercent
+│   │   ├── serialize.js       # response mappers (paise -> rupees)
+│   │   └── errors.js          # AppError + asyncHandler
+│   ├── services/
+│   │   ├── ledgerService.js   # writes ledger entries, updates balance
+│   │   ├── payoutService.js   # advance batch job + reconciliation
+│   │   └── withdrawalService.js # initiate + settle withdrawals
+│   ├── controllers/apiController.js
+│   ├── routes/
+│   ├── app.js
+│   └── index.js
+├── scripts/test-worked-example.js
+├── postman/SettleLedger.postman_collection.json
+├── package.json
+└── README.md
 ```
 
 `ledgerService.record()` is the only place in the codebase that writes a ledger row and updates `users.withdrawable_balance_paise`. It always runs inside whatever transaction the caller opened, so the two can't drift apart.
@@ -178,9 +186,9 @@ With more time I'd swap the `/settle` endpoint for a real payment gateway webhoo
 
 1. New Render **Web Service**, connected to this repo.
 2. Database is [Neon](https://neon.tech) Postgres, external to Render. Set `DATABASE_URL` in the Web Service's environment variables to the Neon pooled connection string, with `?sslmode=require&channel_binding=require` appended — Neon requires SSL.
-3. **Build command:** `npm install && npx prisma generate && npx prisma migrate deploy`
+3. Build command: `npm install && npx prisma generate && npx prisma migrate deploy`
    Render doesn't have a separate post-deploy hook the way Railway does, so migrations just run as part of the build.
-4. **Start command:** `npm start`
+4. Start command: `npm start`
 5. `PORT` is set by Render automatically and read via `process.env.PORT`.
 6. After the first successful deploy, seed once from your local machine against the same `DATABASE_URL`:
    ```bash
