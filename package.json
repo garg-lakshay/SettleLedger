@@ -1,0 +1,32 @@
+{
+  "name": "settleledger",
+  "version": "1.0.0",
+  "description": "Ledger-based user payout management system for Faym.co SDE intern assignment",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "node prisma/seed.js",
+    "db:reset": "prisma migrate reset --force",
+    "test:example": "node scripts/test-worked-example.js",
+    "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "keywords": ["payout", "ledger", "fintech"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "prisma": "^5.22.0",
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
